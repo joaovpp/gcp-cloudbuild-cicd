@@ -1,0 +1,43 @@
+steps:
+# 1. Build da imagem Docker
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '-t', 'us-central1-docker.pkg.dev/udemy-mlops-458613/demo-repo/demo-flask-app',
+    '.'
+  ]
+
+# 2. Push da imagem para o Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'push',
+    'us-central1-docker.pkg.dev/udemy-mlops-458613/demo-repo/demo-flask-app'
+  ]
+
+# 3. Testes com pytest usando a imagem gerada
+- name: 'us-central1-docker.pkg.dev/udemy-mlops-458613/demo-repo/demo-flask-app'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      python -m pytest
+
+# 4. Deploy no Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - 'demo-flask-app'
+    - '--image'
+    - 'us-central1-docker.pkg.dev/udemy-mlops-458613/demo-repo/demo-flask-app'
+    - '--region'
+    - 'us-central1'
+    - '--allow-unauthenticated'
+
+# 5. Imagens para exibir no painel do Cloud Build
+images:
+  - 'us-central1-docker.pkg.dev/udemy-mlops-458613/demo-repo/demo-flask-app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
